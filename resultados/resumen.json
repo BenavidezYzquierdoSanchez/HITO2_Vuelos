@@ -1,0 +1,51 @@
+{
+  "filas_originales": 3344,
+  "filas_validas": 3202,
+  "filas_excluidas": 142,
+  "ops_originales": 38382189,
+  "ops_validas": 35436522,
+  "kpis": {
+    "Operaciones": 35436522,
+    "Puntualidad": 78.08474544990618,
+    "Cancelación": 1.804268488877097,
+    "Demora media en retrasados": 71.0889584132532
+  },
+  "por_anio": [
+    {
+      "Year": 2021,
+      "filas": 665,
+      "validas": 664,
+      "ops": 6311871
+    },
+    {
+      "Year": 2022,
+      "filas": 654,
+      "validas": 653,
+      "ops": 7013508
+    },
+    {
+      "Year": 2023,
+      "filas": 501,
+      "validas": 376,
+      "ops": 6587928
+    },
+    {
+      "Year": 2024,
+      "filas": 645,
+      "validas": 643,
+      "ops": 7546988
+    },
+    {
+      "Year": 2025,
+      "filas": 629,
+      "validas": 624,
+      "ops": 7736770
+    },
+    {
+      "Year": 2026,
+      "filas": 250,
+      "validas": 242,
+      "ops": 3185124
+    }
+  ]
+}

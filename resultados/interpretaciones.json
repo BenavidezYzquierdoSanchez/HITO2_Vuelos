@@ -1,0 +1,62 @@
+[
+  [
+    "Evolución mensual",
+    "¿En qué meses se observa menor puntualidad?",
+    "La línea ordena los meses reales y conserva los huecos; permite distinguir oscilaciones de cambios sostenidos.",
+    "Julio de 2024 presenta la menor puntualidad validada, 68,53%, frente al 89,00% de enero de 2021. Esto orienta la revisión de episodios operacionales. La composición y la cobertura cambian; no es una estimación causal ni una serie de vuelos individuales. Febrero–junio de 2023 no conserva filas válidas y no se interpola."
+  ],
+  [
+    "Comparación de abril",
+    "¿Cómo cambia un mismo mes entre años con segmentos comunes?",
+    "Las barras comparan abril y restringen el análisis a combinaciones aerolínea y alcance presentes en los cinco años con abril válido.",
+    "Se retienen 45 segmentos comunes. 2021: 88.80%; 2022: 77.06%; 2024: 80.50%; 2025: 79.38%; 2026: 79.59%. La restricción mejora la comparabilidad, pero las ponderaciones por operaciones siguen cambiando. No equivale a ajustar rutas o aeropuertos. Abril de 2023 no tiene filas válidas."
+  ],
+  [
+    "Aerolíneas e incertidumbre",
+    "¿Qué diferencias de puntualidad tienen respaldo de volumen?",
+    "Puntos e intervalos Wilson al 95% muestran simultáneamente tasa y precisión condicional.",
+    "EM tiene 89,29% con solo 112 operaciones y un intervalo de 82,20–93,76%; no debe declararse ganadora por el valor puntual. QX registra 83,06% en 461.193 operaciones. B6 presenta 69,83%. Las diferencias pueden reflejar mezcla de rutas y períodos."
+  ],
+  [
+    "Alcance del vuelo",
+    "¿Se relaciona el alcance con la puntualidad observada?",
+    "Barras con base cero facilitan comparar tres categorías sin exagerar las diferencias.",
+    "Corto alcanza 79,48%, largo 77,98% y medio 77,10%. La brecha corto–medio es 2,38 puntos porcentuales. Es una asociación del agregado; los umbrales de distancia que definen las categorías no figuran en los adjuntos."
+  ],
+  [
+    "Resultado de las operaciones",
+    "¿Qué fracción es puntual, retrasada, cancelada o desviada?",
+    "Barras horizontales usan categorías excluyentes: demora 15–59 se calcula restando demora ≥60 de demora ≥15.",
+    "La puntualidad del subconjunto es 78,08% y la cancelación 1,80%. Los retrasos ≥60 ya están incluidos en los retrasos ≥15 y no se suman dos veces. La tasa describe operaciones incluidas y no solo vuelos completados."
+  ],
+  [
+    "Causas de demora",
+    "¿Dónde se concentra el tiempo atribuido de demora?",
+    "Barras porcentuales permiten comparar la contribución de cinco categorías al total de minutos.",
+    "Avión previo representa 39,03% y aerolínea 35,81%: juntas suman 74,84%. Conviene investigar la rotación de aeronaves y los procesos internos antes de proponer medidas. La etiqueta administrativa no demuestra causalidad; no se compara con filas cuyos minutos no concilian."
+  ],
+  [
+    "Volumen y desempeño",
+    "¿Las aerolíneas de mayor volumen son también las más puntuales?",
+    "La dispersión combina volumen y puntualidad; el color representa cancelación, sin convertir tamaño en una tercera magnitud confusa.",
+    "WN concentra 6.052.588 operaciones con 76,75% de puntualidad; DL registra 4.678.479 y 82,47%. Un mayor volumen no implica por sí mismo mejor desempeño. EM es un caso de volumen mínimo, por lo que no sustenta una conclusión general."
+  ],
+  [
+    "Geografía de aeropuertos",
+    "¿Dónde se localizan los hubs con los valores declarados más altos y bajos?",
+    "Se unen códigos IATA del bloque hubs con las coordenadas explícitas del HTML; área de los círculos proporcional a vuelos y color fijo para puntualidad.",
+    "Se ubican 31 de 35 hubs. IAH, LGA, DCA y FLL quedan en la tabla sin inventar coordenadas. HNL registra 85,0% y MIA 74,3% entre los ubicados; FLL declara 73,8% pero no aparece en el mapa. Hubs no tiene fecha ni desglose por aerolínea, por lo que esta vista es independiente."
+  ],
+  [
+    "Cobertura temporal",
+    "¿Qué períodos están realmente disponibles?",
+    "Una matriz año por mes muestra el número de filas, no una supuesta tasa horaria. Los meses sin datos se representan con guion.",
+    "El archivo cubre enero de 2021 a mayo de 2026. Junio–diciembre de 2026 están ausentes y no son ceros. No se compara el total de 2026 con un año completo; para comparaciones interanuales se usa abril y segmentos comunes."
+  ],
+  [
+    "Perfil horario auxiliar",
+    "¿Qué patrón de demora declara el resumen horario?",
+    "Una línea usa solo los diez bloques presentes en hourly; no se construyen cruces día por hora que no existen.",
+    "El resumen declara 98,4 minutos a las 04:00 y 65,6 a las 08:00. No respalda afirmar que la demora siempre crece durante el día. Al faltar conteos, fecha, zona horaria y denominador, la lectura es exploratoria y no se calculan intervalos ni promedios ponderados."
+  ]
+]

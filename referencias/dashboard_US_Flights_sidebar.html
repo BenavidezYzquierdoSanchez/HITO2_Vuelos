@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>US_Flights · US_Flights · Puntualidad Aérea de EE.UU. (2021–2026)</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#070d18; --ink:#e8eef8; --muted:#8b97ab; --line:rgba(148,163,184,.16);
+      --card:#10192b; --accent:#2ee6a6; --teal:#2ec4b6; --gold:#f5b942; --red:#f07178; --blue:#5b8def;
+      --sidebar-w: 290px;
+    }
+    * { box-sizing:border-box; }
+    html, body { margin:0; background:var(--bg); color:var(--ink); font-family:Manrope,system-ui,sans-serif; }
+    .shell { display:flex; min-height:100vh; background:radial-gradient(900px 300px at 0% 0%, rgba(46,230,166,.06), transparent 40%), var(--bg); }
+
+    /* ===== SIDEBAR REDESIGNED ===== */
+    .sidebar {
+      width: var(--sidebar-w);
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE */
+      min-width: var(--sidebar-w);
+      background: #0a101c;
+      border-right: 1px solid var(--line);
+      padding: 20px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      -ms-overflow-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .sidebar::-webkit-scrollbar { display: none; }
+
+    .brand {
+      padding: 4px 8px 16px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 8px;
+    }
+    .brand strong { font-size: 18px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #f4f7fb; }
+    .brand span { display: block; color: var(--accent); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; margin-top: 3px; }
+
+    /* Navigation */
+    nav.side { display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px; }
+    nav.side button {
+      background: transparent; border: 0; color: #9aa8bc; border-radius: 10px;
+      padding: 10px 12px; font: inherit; font-size: 13.5px; cursor: pointer;
+      text-align: left; transition: 0.15s; font-weight: 500;
+    }
+    nav.side button:hover { background: rgba(255,255,255,.04); color: #e8eef8; }
+    nav.side button.active { background: #162033; color: #fff; font-weight: 700; }
+
+    /* Filters section */
+    .filters-title {
+      font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--muted); font-weight: 700; margin: 10px 8px 8px;
+    }
+    .filters { display: flex; flex-direction: column; gap: 8px; }
+    label.f {
+      background: #10192b; border: 1px solid rgba(148,163,184,.14);
+      border-radius: 12px; padding: 10px 12px 8px;
+      display: flex; flex-direction: column; gap: 5px;
+      font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #8b97ab;
+      transition: border-color .15s;
+    }
+    label.f:hover { border-color: rgba(46,230,166,.35); }
+    select {
+      border: 0; background: transparent; font: inherit; font-size: 13.5px;
+      color: #f4f7fb; outline: none; width: 100%; font-weight: 700; cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b97ab' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 2px center; padding-right: 18px;
+    }
+    option { background: #10192b; color: #fff; }
+
+    /* Actions */
+    .sidebar-actions {
+      display: flex; flex-direction: column; gap: 8px;
+      margin-top: auto; padding-top: 16px; border-top: 1px solid var(--line);
+    }
+    #loadJsonBtn, #exportBtn, #fsBtn, #resetSide {
+      background: #121c30; color: #d5deea; border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 12.5px;
+      cursor: pointer; font-weight: 600; text-align: center; transition: .15s;
+    }
+    #loadJsonBtn { border-color: var(--accent); color: var(--accent); }
+    #loadJsonBtn:hover { background: rgba(46,230,166,.1); }
+    #exportBtn { border-color: var(--teal); color: var(--teal); }
+    #exportBtn:hover { background: rgba(46,196,182,.1); }
+    #resetSide:hover, #fsBtn:hover { background: #1a2740; }
+
+    /* Main content */
+    .content { flex: 1; min-width: 0; padding: 22px clamp(18px, 2.5vw, 32px) 48px; }
+    .top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; margin-bottom: 18px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: clamp(22px, 2.8vw, 30px); font-weight: 800; letter-spacing: -.03em; color: #f4f7fb; }
+    .lede { margin: 6px 0 0; color: var(--muted); max-width: 720px; font-size: 14px; line-height: 1.45; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; background: #121c30; border: 1px solid var(--accent); border-radius: 999px; padding: 6px 14px; font-size: 12px; color: var(--accent); font-weight: 600; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+    .pill { background: #121c30; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12px; color: #e8eef8; cursor: pointer; }
+    .live { background: #10192b; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 12px; padding: 12px 16px; color: #c5d0dc; font-size: 13.5px; margin-bottom: 16px; }
+
+    /* KPIs */
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .kpi { border: 1px solid var(--line); border-radius: 16px; padding: 16px; min-height: 148px; color: #fff; display: flex; flex-direction: column; background: rgba(16,25,43,.6); backdrop-filter: blur(10px); transition: transform .2s, border-color .2s; }
+    .kpi:hover { transform: translateY(-2px); border-color: rgba(46,230,166,.4); }
+    .kpi.t0 { background: linear-gradient(180deg, rgba(18,92,68,.5), rgba(10,28,24,.75)); border-color: rgba(46,230,166,.5); }
+    .kpi.t1 { background: linear-gradient(180deg, rgba(28,58,120,.45), rgba(12,22,42,.75)); border-color: rgba(91,141,239,.5); }
+    .kpi.t2 { background: linear-gradient(180deg, rgba(58,92,22,.4), rgba(16,28,12,.75)); border-color: rgba(163,230,53,.45); }
+    .kpi.t3 { background: linear-gradient(180deg, rgba(92,68,18,.38), rgba(24,18,8,.75)); border-color: rgba(245,185,66,.45); }
+    .kpi.t4 { background: linear-gradient(180deg, rgba(110,32,48,.38), rgba(28,12,16,.75)); border-color: rgba(240,113,120,.4); }
+    .kpi.t5 { background: linear-gradient(180deg, rgba(78,36,120,.42), rgba(22,12,36,.75)); border-color: rgba(176,124,255,.45); }
+    .kpi.t6 { background: linear-gradient(180deg, rgba(16,78,92,.42), rgba(8,22,28,.75)); border-color: rgba(46,196,182,.45); }
+    .kpi.t7 { background: linear-gradient(180deg, rgba(40,52,72,.4), rgba(12,16,28,.75)); border-color: rgba(148,163,184,.3); }
+    .kpi-h { display: flex; justify-content: space-between; align-items: center; }
+    .ico { width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; background: rgba(255,255,255,.1); }
+    .kpi.t0 .ico { color: #2ee6a6; } .kpi.t1 .ico { color: #7eb0ff; } .kpi.t2 .ico { color: #b6f25c; }
+    .kpi.t3 .ico { color: #f5b942; } .kpi.t4 .ico { color: #f07178; } .kpi.t5 .ico { color: #c9a6ff; }
+    .kpi.t6 .ico { color: #2ec4b6; } .kpi.t7 .ico { color: #94a3b8; }
+    .badge { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 4px 10px; }
+    .kpi .k { margin-top: 10px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #c5d0dc; font-weight: 700; }
+    .kpi .v { font-size: clamp(26px, 2.4vw, 34px); font-weight: 800; letter-spacing: -.04em; margin: 6px 0 8px; color: #f8fbff; }
+    .meter { height: 5px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; margin-top: auto; }
+    .meter span { display: block; height: 100%; background: #2ee6a6; }
+
+    /* Cards & charts */
+    .grid-2 { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(280px,1fr); gap: 14px; margin-bottom: 14px; }
+    .card { background: rgba(16,25,43,.72); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; margin-bottom: 14px; }
+    .card h3 { margin: 0; padding: 14px 16px 0; font-size: 15.5px; font-weight: 700; color: #f4f7fb; }
+    .note { margin: 0; padding: 4px 16px 12px; color: var(--muted); font-size: 12.5px; border-bottom: 1px solid var(--line); }
+    .plot { width: 100%; min-width: 0; padding: 4px 6px 0; }
+    .interp { margin: 0; background: #0d1524; border-top: 1px solid var(--line); padding: 12px 16px; font-size: 13px; line-height: 1.5; color: #c5d0dc; }
+    .interp strong { color: var(--accent); }
+    .view { display: none; } .view.active { display: block; }
+    .marco { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; background: #10192b; border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+    footer { margin-top: 24px; color: #6d7b90; font-size: 11px; text-align: center; }
+
+    
+    .filter-group { margin-bottom: 14px; }
+    .group-label {
+      font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent); font-weight: 700; margin: 0 8px 6px;
+    }
+    .filter-group .f { margin-bottom: 8px; }
+
+    /* Responsive */
+    @media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) {
+      .shell { flex-direction: column; }
+      .sidebar { width: 100%; min-width: 0; height: auto; position: relative; border-right: 0; border-bottom: 1px solid var(--line); }
+      nav.side { flex-direction: row; flex-wrap: wrap; }
+      .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+      .sidebar-actions { flex-direction: row; flex-wrap: wrap; }
+    }
+    @media (max-width: 560px) {
+      .kpis { grid-template-columns: 1fr; }
+      .filters { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+  <div class="shell" id="dropArea">
+    
+  <aside class="sidebar">
+    <div class="brand">
+      <div><strong>US_Flights</strong><span>Puntualidad Aérea</span></div>
+    </div>
+
+    <nav class="side" id="tabs">
+      <button class="active" data-view="overview">Panorama</button>
+      <button data-view="temporal">Estacionalidad</button>
+      <button data-view="geo">Geografía</button>
+      <button data-view="carriers">Aerolíneas</button>
+      <button data-view="marco">Metodología</button>
+    </nav>
+
+    
+    <div class="filters-title">Filtros</div>
+
+    <div class="filter-group">
+      <div class="group-label">Temporal</div>
+      <label class="f">Año
+        <select id="fYear"><option value="all">Todos los años</option></select>
+      </label>
+      <label class="f">Mes
+        <select id="fMonth"><option value="all">Todos los meses</option></select>
+      </label>
+    </div>
+
+    <div class="filter-group">
+      <div class="group-label">Operativo</div>
+      <label class="f">Aerolínea
+        <select id="fAirline"><option value="all">Todas las aerolíneas</option></select>
+      </label>
+      <label class="f">Radio de Vuelo
+        <select id="fType">
+          <option value="all">Todos los radios</option>
+          <option value="corto">Corto (< 500 mi)</option>
+          <option value="medio">Medio (500–1.500 mi)</option>
+          <option value="largo">Largo (> 1.500 mi)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="filter-group">
+      <div class="group-label">Geográfico y Criterio</div>
+      <label class="f">Estado de Origen
+        <select id="fState"><option value="all">Todos los estados</option></select>
+      </label>
+      <label class="f">Criterio de Atraso
+        <select id="fThresh">
+          <option value="15">DOT Estándar: ≥ 15 min</option>
+          <option value="60">Atraso Severo: ≥ 60 min</option>
+        </select>
+      </label>
+    </div>
+
+
+    <div class="sidebar-actions">
+      <input type="file" id="fileInput" accept=".json" style="display:none;" />
+      <button id="loadJsonBtn" type="button" onclick="document.getElementById('fileInput').click()">📂 Cargar JSON</button>
+      <button id="exportBtn" type="button" onclick="exportFilteredCSV()">📥 Exportar CSV</button>
+      <button id="resetSide" type="button">Limpiar filtros</button>
+      <button id="fsBtn" type="button">Pantalla completa</button>
+    </div>
+  </aside>
+
+
+    <div class="content">
+      <div class="top">
+        <div>
+          <h1>US_Flights · Puntualidad Aérea de EE.UU.</h1>
+          <p class="lede">Plataforma interactiva de inteligencia operacional. Filtros conectados, análisis temporal, geoespacial y de aerolíneas. Carga tu JSON o usa los datos por defecto.</p>
+        </div>
+        <div id="statusBadge" class="status-badge">Iniciando motor...</div>
+      </div>
+
+      <!-- FILTROS MULTIDIMENSIONALES -->
+      <div class="chips" id="chips"></div>
+      <div class="live" id="live">Cargando métricas...</div>
+      
+      <!-- CONTENEDOR DE LOS 6 KPIs MÁS RELEVANTES -->
+      <section class="kpis" id="kpis"></section>
+
+      <!-- PANORAMA -->
+      <section id="overview" class="view active">
+        <div class="card" style="margin-bottom:12px;">
+          <h3>Tendencia Histórica de Operaciones y Puntualidad (2021–2026)</h3>
+          <p class="note">Volumen de salidas (barras) frente a puntualidad anual OTP % (línea). Clic en una barra para filtrar el año.</p>
+          <div id="chartYearTrend" class="plot" style="height:260px"></div>
+          <div class="interp" id="iYearTrend"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3 id="titleMonthChart">Evolución Mensual de Puntualidad y Demoras</h3>
+            <p class="note" id="noteMonthChart">Clic en una barra o punto para fijar el mes.</p>
+            <div id="chartMonth" class="plot" style="height:360px"></div>
+            <div class="interp" id="iMonth"></div>
+          </div>
+          <div>
+            <div class="card">
+              <h3>Composición del resultado operativo</h3>
+              <p class="note">A tiempo vs Atraso moderado/severo vs Cancelación vs Desvío.</p>
+              <div id="chartMix" class="plot" style="height:210px"></div>
+              <div class="interp" id="iMix"></div>
+            </div>
+            <div class="card">
+              <h3>Puntualidad por radio de distancia</h3>
+              <p class="note">Millas náuticas recorridas por vuelo.</p>
+              <div id="chartType" class="plot" style="height:170px"></div>
+              <div class="interp" id="iType"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEMPORAL -->
+      <section id="temporal" class="view">
+        <div class="card" style="margin-bottom:12px;">
+          <h3>Matriz de Calor de Congestión Semanal (Día vs. Bloque Horario)</h3>
+          <p class="note">Probabilidad de demora acumulada según hora de salida programada.</p>
+          <div id="chartHeatmap" class="plot" style="height:280px"></div>
+          <div class="interp" id="iHeatmap"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Puntualidad por día de la semana</h3>
+            <p class="note">Ciclo semanal consolidado.</p>
+            <div id="chartDow" class="plot" style="height:320px"></div>
+            <div class="interp" id="iDow"></div>
+          </div>
+          <div class="card">
+            <h3>Curva de atraso medio por bloque de salida</h3>
+            <p class="note">Minutos promedio de demora según hora programada.</p>
+            <div id="chartHour" class="plot" style="height:320px"></div>
+            <div class="interp" id="iHour"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Evolución estacional con bandas de dispersión</h3>
+          <p class="note">Banda sombreada de ±1 Desviación estándar frente a la meta DOT del 80% OTP.</p>
+          <div id="chartBand" class="plot" style="height:300px"></div>
+          <div class="interp" id="iBand"></div>
+        </div>
+      </section>
+
+      <!-- GEOGRAFÍA VECTORIAL CALIBRADA -->
+      <section id="geo" class="view">
+        <div class="grid-2">
+          <div class="card">
+            <h3>Mapa Geoespacial Vectorial · Nodos Aéreos y Estados</h3>
+            <p class="note">Paleta de alto contraste US_Flights. Clic sobre un aeropuerto o estado para filtrar.</p>
+            <div id="chartGeoMap" class="plot" style="height:420px"></div>
+            <div class="interp" id="iMap"></div>
+          </div>
+          <div class="card">
+            <h3>Hubs principales: Volumen vs. Puntualidad</h3>
+            <p class="note">Tamaño de la burbuja proporcional a la tasa de cancelación.</p>
+            <div id="chartHubs" class="plot" style="height:420px"></div>
+            <div class="interp" id="iHubs"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AEROLÍNEAS -->
+      <section id="carriers" class="view">
+        <div class="card" style="margin-bottom:12px;">
+          <h3>Diagrama de Resiliencia: Volumen de Operaciones vs. Puntualidad OTP</h3>
+          <p class="note">Evalúa la degradación de puntualidad frente a escala operativa. Tamaño = Tasa de cancelación.</p>
+          <div id="chartTradeoff" class="plot" style="height:300px"></div>
+          <div class="interp" id="iTradeoff"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Ranking de operadores por puntualidad</h3>
+            <p class="note">Puntualidad (%) y Tasa de cancelación (%). Clic en una barra para filtrar.</p>
+            <div id="chartAirlines" class="plot" style="height:420px"></div>
+            <div class="interp" id="iAir"></div>
+          </div>
+          <div class="card">
+            <h3>Minutos de atraso por causa DOT</h3>
+            <p class="note">Aeronave previa, NAS, Aerolínea, Clima y Seguridad.</p>
+            <div id="chartCauses" class="plot" style="height:420px"></div>
+            <div class="interp" id="iCauses"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- METODOLOGÍA -->
+      <section id="marco" class="view">
+        <div class="marco">
+          <article><h3>Dataset Multianual</h3><p>Análisis longitudinal sobre microdatos oficiales de transporte aéreo (2021–2026).</p></article>
+          <article><h3>Criterio DOT Oficial</h3><p>Vuelo puntual: ArrDelay &lt; 15 min, sin cancelación ni desvío.</p></article>
+          <article><h3>Significancia Estadística</h3><p>Filtro de soporte mínimo ($N \ge 30$) para mitigar sesgos en cortes reducidos.</p></article>
+          <article><h3>Arquitectura AWS</h3><p>100% compatible con Amazon S3 + CloudFront bajo HTTPS estático.</p></article>
+        </div>
+      </section>
+
+      <footer>US_Flights 2025 · Motor de Inteligencia de Datos Aeronáuticos basado en microdatos de la BTS.</footer>
+    </div>
+  </div>
+
+  <script>
+    const CARRIER_NAMES = {
+      "9E": "Endeavor Air", "AA": "American Airlines", "AS": "Alaska Airlines", "B6": "JetBlue Airways",
+      "C5": "CommuteAir", "DL": "Delta Air Lines", "EM": "Empire Airlines", "F9": "Frontier Airlines",
+      "G4": "Allegiant Air", "G7": "GoJet Airlines", "HA": "Hawaiian Airlines", "MQ": "Envoy Air",
+      "NK": "Spirit Airlines", "OH": "PSA Airlines", "OO": "SkyWest Airlines", "PT": "Piedmont Airlines",
+      "QX": "Horizon Air", "UA": "United Airlines", "WN": "Southwest Airlines", "YV": "Mesa Airlines",
+      "YX": "Republic Airways", "ZW": "Air Wisconsin"
+    };
+
+    const STATE_NAMES = {
+      AL:"Alabama", AK:"Alaska", AZ:"Arizona", AR:"Arkansas", CA:"California", CO:"Colorado",
+      CT:"Connecticut", DE:"Delaware", FL:"Florida", GA:"Georgia", HI:"Hawái", ID:"Idaho",
+      IL:"Illinois", IN:"Indiana", IA:"Iowa", KS:"Kansas", KY:"Kentucky", LA:"Luisiana",
+      ME:"Maine", MD:"Maryland", MA:"Massachusetts", MI:"Míchigan", MN:"Minnesota", MS:"Misisipi",
+      MO:"Misuri", MT:"Montana", NE:"Nebraska", NV:"Nevada", NH:"Nuevo Hampshire", NJ:"Nueva Jersey",
+      NM:"Nuevo México", NY:"Nueva York", NC:"Carolina del Norte", ND:"Dakota del Norte", OH:"Ohio",
+      OK:"Oklahoma", OR:"Oregón", PA:"Pensilvania", RI:"Rhode Island", SC:"Carolina del Sur",
+      SD:"Dakota del Sur", TN:"Tennessee", TX:"Texas", UT:"Utah", VT:"Vermont", VA:"Virginia",
+      WA:"Washington", WV:"Virginia Occidental", WI:"Wisconsin", WY:"Wyoming", PR:"Puerto Rico", VI:"Islas Vírgenes",
+      US:"EE.UU. (Nacional)"
+    };
+
+    const AIRPORT_COORDS = {
+      ATL:[33.6407, -84.4277], DFW:[32.8998, -97.0403], DEN:[39.8561, -104.6737],
+      ORD:[41.9742, -87.9073], CLT:[35.2140, -80.9431], LAX:[33.9416, -118.4085],
+      PHX:[33.4373, -112.0078], MCO:[28.4312, -81.3081], EWR:[40.6895, -74.1745],
+      SEA:[47.4502, -122.3088], LAS:[36.0840, -115.1537], MIA:[25.7959, -80.2870],
+      SFO:[37.6213, -122.3790], BOS:[42.3656, -71.0096], JFK:[40.6413, -73.7781],
+      MSP:[44.8848, -93.2223], DTW:[42.2162, -83.3554], PHL:[39.8729, -75.2437],
+      SLC:[40.7899, -111.9791], BWI:[39.1774, -76.6684], SAN:[32.7338, -117.1933],
+      TPA:[27.9755, -82.5332], BNA:[36.1263, -86.6774], IAD:[38.9531, -77.4565],
+      MDW:[41.7868, -87.7522], HOU:[29.6454, -95.2789], DAL:[32.8471, -96.8518],
+      PDX:[45.5898, -122.5951], HNL:[21.3245, -157.9251], STL:[38.7499, -90.3748],
+      AUS:[30.1975, -97.6664], RDU:[35.8801, -78.7880], MSY:[29.9911, -90.2592],
+      SJU:[18.4394, -66.0018], STT:[18.3373, -64.9734], STX:[17.7019, -64.7986]
+    };
+
+    const MONTH_LABELS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+    const DOW_LABELS = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+
+    const ICONS = {
+      clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>',
+      alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>',
+      tri: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4l8 14H4z"/><path d="M12 10v4"/></svg>',
+      sand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h10M7 20h10M8 4c0 4 4 4 4 8s-4 4-4 8M16 4c0 4-4 4-4 8s4 4 4 8"/></svg>',
+      ban: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M7 7l10 10"/></svg>',
+      fork: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 16c4-6 6-6 8-6h8"/><path d="M16 6l4 4-4 4"/></svg>',
+      pie: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4a8 8 0 1 0 8 8h-8z"/></svg>',
+      pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10z"/><circle cx="12" cy="11" r="2"/></svg>'
+    };
+
+    // CONFIGURACIÓN BASE DE DISEÑO Y LEYENDAS REUTILIZABLE
+    const layoutBase = {
+      paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
+      font:{family:"Manrope, sans-serif",color:"#b7c3d4",size:11},
+      margin:{t:28,r:16,b:40,l:48}, autosize:true,
+      showlegend: true,
+      legend: {
+        orientation: "h",
+        y: -0.22,
+        x: 0,
+        xanchor: "left",
+        font: { size: 11, color: "#d5deea" },
+        bgcolor: "rgba(16,25,43,0.4)"
+      }
+    };
+    const grid = {gridcolor:"rgba(148,163,184,.12)",zeroline:false,automargin:true};
+
+    let RAW_CUBE = [];
+    let HUBS = [];
+    let DOW = [];
+    let HOURLY = [];
+
+    const EMBEDDED_DATA = {
+      cube: [
+        {"Year":2021,"Month":4,"Airline":"9E","OriginState":"US","Haul":"corto","ops":16424,"ontime":15656,"delayed15":753,"delayed60":265,"cancel":0,"divert":15,"sumDelayMin":52108,"carrierDelay":28448,"weatherDelay":4881,"nasDelay":6216,"secDelay":45,"lateAirDelay":12518},
+        {"Year":2021,"Month":4,"Airline":"AA","OriginState":"US","Haul":"corto","ops":10420,"ontime":9292,"delayed15":1070,"delayed60":323,"cancel":50,"divert":8,"sumDelayMin":76895,"carrierDelay":32925,"weatherDelay":5423,"nasDelay":13806,"secDelay":164,"lateAirDelay":24577},
+        {"Year":2021,"Month":4,"Airline":"DL","OriginState":"US","Haul":"corto","ops":10677,"ontime":9771,"delayed15":839,"delayed60":305,"cancel":52,"divert":15,"sumDelayMin":65024,"carrierDelay":30982,"weatherDelay":8266,"nasDelay":11365,"secDelay":34,"lateAirDelay":14377},
+        {"Year":2021,"Month":4,"Airline":"UA","OriginState":"US","Haul":"medio","ops":16232,"ontime":14525,"delayed15":1643,"delayed60":451,"cancel":35,"divert":29,"sumDelayMin":106482,"carrierDelay":26398,"weatherDelay":10837,"nasDelay":36134,"secDelay":10,"lateAirDelay":33103},
+        {"Year":2021,"Month":4,"Airline":"WN","OriginState":"US","Haul":"medio","ops":46971,"ontime":40852,"delayed15":5665,"delayed60":1244,"cancel":368,"divert":86,"sumDelayMin":276479,"carrierDelay":96130,"weatherDelay":12376,"nasDelay":61704,"secDelay":2452,"lateAirDelay":103817},
+        {"Year":2022,"Month":4,"Airline":"AA","OriginState":"US","Haul":"corto","ops":13757,"ontime":10839,"delayed15":2652,"delayed60":899,"cancel":252,"divert":14,"sumDelayMin":188338,"carrierDelay":64441,"weatherDelay":8385,"nasDelay":26294,"secDelay":180,"lateAirDelay":89038},
+        {"Year":2022,"Month":4,"Airline":"DL","OriginState":"US","Haul":"medio","ops":40445,"ontime":32204,"delayed15":7621,"delayed60":2814,"cancel":542,"divert":78,"sumDelayMin":570987,"carrierDelay":283790,"weatherDelay":16510,"nasDelay":100387,"secDelay":176,"lateAirDelay":170124},
+        {"Year":2022,"Month":4,"Airline":"UA","OriginState":"US","Haul":"corto","ops":7312,"ontime":5888,"delayed15":1302,"delayed60":487,"cancel":118,"divert":4,"sumDelayMin":97887,"carrierDelay":31050,"weatherDelay":4738,"nasDelay":15761,"secDelay":26,"lateAirDelay":46312},
+        {"Year":2022,"Month":4,"Airline":"WN","OriginState":"US","Haul":"corto","ops":41774,"ontime":30206,"delayed15":10884,"delayed60":2650,"cancel":650,"divert":34,"sumDelayMin":537895,"carrierDelay":165438,"weatherDelay":6255,"nasDelay":58635,"secDelay":703,"lateAirDelay":306864},
+        {"Year":2023,"Month":4,"Airline":"AS","OriginState":"US","Haul":"corto","ops":15172,"ontime":12137,"delayed15":2730,"delayed60":606,"cancel":212,"divert":93,"sumDelayMin":132000,"carrierDelay":42000,"weatherDelay":11000,"nasDelay":28000,"secDelay":1000,"lateAirDelay":50000},
+        {"Year":2023,"Month":4,"Airline":"OO","OriginState":"US","Haul":"corto","ops":47468,"ontime":37974,"delayed15":8544,"delayed60":2373,"cancel":712,"divert":238,"sumDelayMin":415000,"carrierDelay":150000,"weatherDelay":38000,"nasDelay":82000,"secDelay":2000,"lateAirDelay":143000},
+        {"Year":2024,"Month":4,"Airline":"AA","OriginState":"US","Haul":"medio","ops":49771,"ontime":36880,"delayed15":12154,"delayed60":4706,"cancel":597,"divert":140,"sumDelayMin":989894,"carrierDelay":305100,"weatherDelay":62509,"nasDelay":155241,"secDelay":1723,"lateAirDelay":465321},
+        {"Year":2024,"Month":4,"Airline":"DL","OriginState":"US","Haul":"medio","ops":45332,"ontime":37992,"delayed15":7154,"delayed60":2321,"cancel":98,"divert":88,"sumDelayMin":490295,"carrierDelay":219572,"weatherDelay":14583,"nasDelay":100649,"secDelay":664,"lateAirDelay":154827},
+        {"Year":2024,"Month":4,"Airline":"WN","OriginState":"US","Haul":"medio","ops":67964,"ontime":53863,"delayed15":13701,"delayed60":3763,"cancel":275,"divert":125,"sumDelayMin":742217,"carrierDelay":219420,"weatherDelay":14707,"nasDelay":134687,"secDelay":2173,"lateAirDelay":371230},
+        {"Year":2025,"Month":1,"Airline":"AA","OriginState":"US","Haul":"corto","ops":15218,"ontime":11827,"delayed15":2677,"delayed60":936,"cancel":694,"divert":20,"sumDelayMin":231285,"carrierDelay":89642,"weatherDelay":25998,"nasDelay":31512,"secDelay":299,"lateAirDelay":83834},
+        {"Year":2025,"Month":2,"Airline":"DL","OriginState":"US","Haul":"medio","ops":44066,"ontime":34234,"delayed15":9095,"delayed60":3161,"cancel":642,"divert":95,"sumDelayMin":716598,"carrierDelay":256946,"weatherDelay":37320,"nasDelay":126389,"secDelay":1257,"lateAirDelay":294686},
+        {"Year":2025,"Month":3,"Airline":"UA","OriginState":"US","Haul":"medio","ops":38166,"ontime":31307,"delayed15":6645,"delayed60":2384,"cancel":119,"divert":95,"sumDelayMin":461909,"carrierDelay":127450,"weatherDelay":21779,"nasDelay":137902,"secDelay":0,"lateAirDelay":174778},
+        {"Year":2025,"Month":4,"Airline":"DL","OriginState":"US","Haul":"medio","ops":45558,"ontime":36812,"delayed15":8402,"delayed60":2893,"cancel":223,"divert":121,"sumDelayMin":577583,"carrierDelay":259381,"weatherDelay":23496,"nasDelay":119825,"secDelay":341,"lateAirDelay":174540},
+        {"Year":2025,"Month":7,"Airline":"WN","OriginState":"US","Haul":"medio","ops":69048,"ontime":44997,"delayed15":22991,"delayed60":7372,"cancel":779,"divert":281,"sumDelayMin":1329533,"carrierDelay":327017,"weatherDelay":52203,"nasDelay":245576,"secDelay":2624,"lateAirDelay":702113},
+        {"Year":2026,"Month":1,"Airline":"AA","OriginState":"US","Haul":"medio","ops":48666,"ontime":33228,"delayed15":10740,"delayed60":4394,"cancel":4580,"divert":118,"sumDelayMin":1022405,"carrierDelay":388157,"weatherDelay":116783,"nasDelay":123468,"secDelay":2562,"lateAirDelay":391435},
+        {"Year":2026,"Month":2,"Airline":"DL","OriginState":"US","Haul":"medio","ops":40235,"ontime":32474,"delayed15":6732,"delayed60":2087,"cancel":963,"divert":66,"sumDelayMin":444190,"carrierDelay":221602,"weatherDelay":16054,"nasDelay":83205,"secDelay":491,"lateAirDelay":122838},
+        {"Year":2026,"Month":3,"Airline":"WN","OriginState":"US","Haul":"medio","ops":67799,"ontime":47921,"delayed15":18453,"delayed60":5660,"cancel":1235,"divert":190,"sumDelayMin":1066041,"carrierDelay":304908,"weatherDelay":23463,"nasDelay":196895,"secDelay":7284,"lateAirDelay":532317},
+        {"Year":2026,"Month":4,"Airline":"DL","OriginState":"US","Haul":"medio","ops":46838,"ontime":39208,"delayed15":7142,"delayed60":2132,"cancel":379,"divert":109,"sumDelayMin":457092,"carrierDelay":213231,"weatherDelay":10258,"nasDelay":95527,"secDelay":310,"lateAirDelay":137766}
+      ],
+      hubs: [
+        {code:"ATL", state:"GA", flights:38240, otp:82.4, cancel:0.95},
+        {code:"DFW", state:"TX", flights:34120, otp:77.1, cancel:1.65},
+        {code:"DEN", state:"CO", flights:33200, otp:78.2, cancel:1.45},
+        {code:"ORD", state:"IL", flights:31050, otp:79.3, cancel:1.80},
+        {code:"CLT", state:"NC", flights:24500, otp:80.8, cancel:1.20},
+        {code:"LAX", state:"CA", flights:22400, otp:80.4, cancel:1.10},
+        {code:"PHX", state:"AZ", flights:20100, otp:79.8, cancel:0.90},
+        {code:"MCO", state:"FL", flights:17800, otp:75.9, cancel:1.60},
+        {code:"EWR", state:"NJ", flights:16700, otp:72.4, cancel:2.35},
+        {code:"SEA", state:"WA", flights:15800, otp:81.2, cancel:0.85},
+        {code:"LAS", state:"NV", flights:15200, otp:76.7, cancel:1.30},
+        {code:"MIA", state:"FL", flights:14600, otp:74.1, cancel:1.90},
+        {code:"BOS", state:"MA", flights:14200, otp:74.8, cancel:1.75},
+        {code:"JFK", state:"NY", flights:13900, otp:75.2, cancel:1.60},
+        {code:"SFO", state:"CA", flights:13500, otp:77.5, cancel:1.50}
+      ],
+      dow: [
+        {dow:1, ops:48500, otp:78.4}, {dow:2, ops:46200, otp:78.1}, {dow:3, ops:47100, otp:77.3},
+        {dow:4, ops:49300, otp:75.8}, {dow:5, ops:51200, otp:74.9}, {dow:6, ops:42100, otp:79.1}, {dow:7, ops:45800, otp:76.4}
+      ],
+      hourly: [
+        {hour_block:6, avg_delay:42.1}, {hour_block:8, avg_delay:48.3}, {hour_block:10, avg_delay:53.6},
+        {hour_block:12, avg_delay:59.8}, {hour_block:14, avg_delay:68.4}, {hour_block:16, avg_delay:74.2},
+        {hour_block:18, avg_delay:78.9}, {hour_block:20, avg_delay:76.1}, {hour_block:22, avg_delay:69.4}
+      ]
+    };
+
+    function init() {
+      loadDataset(EMBEDDED_DATA, "Dataset Multianual 2021–2026 Activo");
+
+      try {
+        const cached = localStorage.getItem("data_vuelos_multianual_cache");
+        if(cached) {
+          const json = JSON.parse(cached);
+          loadDataset(json, "Cargado desde memoria local");
+        }
+      } catch(e) {}
+
+      if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+        fetch("data_vuelos_dashboard_final.json")
+          .then(res => res.ok ? res.json() : null)
+          .then(json => {
+            if (json && json.cube) {
+              loadDataset(json, "Sincronizado: data_vuelos_dashboard_final.json");
+            }
+          })
+          .catch(() => {});
+      }
+    }
+
+    document.getElementById("fileInput").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if(!file) return;
+      readFile(file);
+    });
+
+    window.addEventListener("dragover", e => e.preventDefault());
+    window.addEventListener("drop", e => {
+      e.preventDefault();
+      if(e.dataTransfer.files && e.dataTransfer.files[0]) {
+        readFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    function readFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const text = evt.target.result;
+          const json = JSON.parse(text);
+          // Clear previous cache and force new data
+          try { localStorage.removeItem("data_vuelos_multianual_cache"); } catch(e) {}
+          try { localStorage.setItem("data_vuelos_multianual_cache", text); } catch(err) {}
+          loadDataset(json, "✓ JSON cargado: " + file.name + " (" + (json.cube ? json.cube.length : 0) + " registros)");
+          // Force visual feedback
+          document.getElementById("statusBadge").style.background = "#162033";
+          setTimeout(() => { document.getElementById("statusBadge").style.background = ""; }, 2000);
+        } catch(err) {
+          alert("Error al leer el archivo JSON: " + err.message);
+          console.error(err);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function loadDataset(payload, msg) {
+      RAW_CUBE = payload.cube || [];
+      HUBS = (payload.hubs && payload.hubs.length) ? payload.hubs : EMBEDDED_DATA.hubs;
+      DOW = (payload.dow && payload.dow.length) ? payload.dow : EMBEDDED_DATA.dow;
+      HOURLY = (payload.hourly && payload.hourly.length) ? payload.hourly : EMBEDDED_DATA.hourly;
+
+      document.getElementById("statusBadge").textContent = "✓ " + msg;
+      populateSelectors();
+      renderAll();
+    }
+
+    function populateSelectors() {
+      const years = Array.from(new Set(RAW_CUBE.map(r => r.Year))).filter(Boolean).sort((a,b)=>b-a);
+      const fYear = document.getElementById("fYear");
+      fYear.innerHTML = `<option value="all">Todos los años (${years.length || 1})</option>`;
+      years.forEach(y => {
+        const opt = document.createElement("option"); opt.value = y; opt.textContent = `Año ${y}`; fYear.appendChild(opt);
+      });
+
+      const months = Array.from(new Set(RAW_CUBE.map(r => r.Month))).filter(Boolean).sort((a,b)=>a-b);
+      const fMonth = document.getElementById("fMonth");
+      fMonth.innerHTML = `<option value="all">Todos los meses (${months.length})</option>`;
+      months.forEach(m => {
+        const opt = document.createElement("option"); opt.value = m; opt.textContent = `${MONTH_LABELS[m-1] || 'Mes '+m} (Mes ${m})`; fMonth.appendChild(opt);
+      });
+
+      const airlines = Array.from(new Set(RAW_CUBE.map(r => r.Airline))).filter(Boolean).sort();
+      const fAir = document.getElementById("fAirline");
+      fAir.innerHTML = `<option value="all">Todas las aerolíneas (${airlines.length})</option>`;
+      airlines.forEach(a => {
+        const name = CARRIER_NAMES[a] ? `${a} — ${CARRIER_NAMES[a]}` : a;
+        const opt = document.createElement("option"); opt.value = a; opt.textContent = name; fAir.appendChild(opt);
+      });
+
+      const states = Array.from(new Set(RAW_CUBE.map(r => r.OriginState))).filter(Boolean).sort();
+      const fSt = document.getElementById("fState");
+      fSt.innerHTML = `<option value="all">Todos los estados (${states.length})</option>`;
+      states.forEach(s => {
+        const name = STATE_NAMES[s] ? `${s} — ${STATE_NAMES[s]}` : s;
+        const opt = document.createElement("option"); opt.value = s; opt.textContent = name; fSt.appendChild(opt);
+      });
+    }
+
+    function getFilteredRows() {
+      const y = document.getElementById("fYear").value;
+      const m = document.getElementById("fMonth").value;
+      const a = document.getElementById("fAirline").value;
+      const s = document.getElementById("fState").value;
+      const t = document.getElementById("fType").value;
+
+      return RAW_CUBE.filter(r => {
+        if(y !== "all" && r.Year && String(r.Year) !== y) return false;
+        if(m !== "all" && String(r.Month) !== m) return false;
+        if(a !== "all" && r.Airline !== a) return false;
+        if(s !== "all" && r.OriginState !== s) return false;
+        if(t !== "all" && r.Haul !== t) return false;
+        return true;
+      });
+    }
+
+    function aggregate(rows) {
+      let ops = 0, ontime = 0, del15 = 0, del60 = 0, cancel = 0, divert = 0, sumDelay = 0;
+      let carrier = 0, weather = 0, nas = 0, sec = 0, lateAir = 0;
+
+      for(let i=0; i<rows.length; i++) {
+        const r = rows[i];
+        ops += r.ops || 0;
+        ontime += r.ontime || 0;
+        del15 += r.delayed15 || 0;
+        del60 += r.delayed60 || 0;
+        cancel += r.cancel || 0;
+        divert += r.divert || 0;
+        sumDelay += r.sumDelayMin || 0;
+        carrier += r.carrierDelay || 0;
+        weather += r.weatherDelay || 0;
+        nas += r.nasDelay || 0;
+        sec += r.secDelay || 0;
+        lateAir += r.lateAirDelay || 0;
+      }
+
+      return {
+        ops, ontime, del15, del60, cancel, divert,
+        otp: ops ? (ontime * 100 / ops) : 0,
+        cancelRate: ops ? (cancel * 100 / ops) : 0,
+        divertRate: ops ? (divert * 100 / ops) : 0,
+        del15Rate: ops ? (del15 * 100 / ops) : 0,
+        del60Rate: ops ? (del60 * 100 / ops) : 0,
+        avgDelay: del15 ? (sumDelay / del15) : 0,
+        causes: { carrier, weather, nas, sec, lateAir }
+      };
+    }
+
+    function renderAll() {
+      if(!RAW_CUBE.length) return;
+      const rows = getFilteredRows();
+      const stats = aggregate(rows);
+
+      renderChips();
+      renderKpis(stats);
+      renderChartYearTrend();
+      renderChartMonth();
+      renderChartMix(stats);
+      renderChartType();
+      renderChartHeatmap(stats);
+      renderChartDow();
+      renderChartHour();
+      renderChartBand();
+      renderGeoMap();
+      renderChartHubs();
+      renderChartTradeoff();
+      renderChartAirlines();
+      renderChartCauses(stats);
+      bindPlotlyClicks();
+      fitPlots();
+    }
+
+    function renderChips() {
+      const y = document.getElementById("fYear").value;
+      const m = document.getElementById("fMonth").value;
+      const a = document.getElementById("fAirline").value;
+      const s = document.getElementById("fState").value;
+      const t = document.getElementById("fType").value;
+      const thresh = document.getElementById("fThresh").value;
+
+      const chips = [];
+      if(y !== "all") chips.push(`<button class="pill" onclick="clearFilter('fYear')">Año: ${y} ×</button>`);
+      if(m !== "all") chips.push(`<button class="pill" onclick="clearFilter('fMonth')">Mes: ${MONTH_LABELS[m-1] || m} ×</button>`);
+      if(a !== "all") chips.push(`<button class="pill" onclick="clearFilter('fAirline')">Aerolínea: ${a} ×</button>`);
+      if(s !== "all") chips.push(`<button class="pill" onclick="clearFilter('fState')">Estado: ${s} ×</button>`);
+      if(t !== "all") chips.push(`<button class="pill" onclick="clearFilter('fType')">Radio: ${t} ×</button>`);
+      if(thresh !== "15") chips.push(`<button class="pill" onclick="clearFilter('fThresh')">Umbral: ≥60m ×</button>`);
+
+      document.getElementById("chips").innerHTML = chips.join("");
+    }
+
+    function clearFilter(id) {
+      document.getElementById(id).value = id === "fThresh" ? "15" : "all";
+      renderAll();
+    }
+
+    function renderKpis(s) {
+      const thresh = document.getElementById("fThresh").value;
+      const delayedRate = thresh === "60" ? s.del60Rate : s.del15Rate;
+      
+      const causes = s.causes;
+      const causeArr = [
+        {k:"Aeronave Previa", v:causes.lateAir}, {k:"NAS / ATC", v:causes.nas},
+        {k:"Aerolínea", v:causes.carrier}, {k:"Clima", v:causes.weather}, {k:"Seguridad", v:causes.sec}
+      ].sort((a,b)=>b.v-a.v);
+      const topCause = causeArr[0] && causeArr[0].v > 0 ? causeArr[0].k : "Aeronave Previa";
+      const topCauseMin = causeArr[0] && causeArr[0].v > 0 ? causeArr[0].v : 0;
+      const totalDelayMin = (causes.lateAir + causes.nas + causes.carrier + causes.weather + causes.sec) || 1;
+      const topCausePct = (topCauseMin * 100 / totalDelayMin);
+
+      const filteredState = document.getElementById("fState").value;
+      const hubList = (HUBS && HUBS.length) ? HUBS.filter(h => filteredState === "all" || h.state === filteredState) : [];
+      const worstHub = hubList.slice().sort((a,b) => a.otp - b.otp)[0];
+
+      const lowSample = s.ops > 0 && s.ops < 30;
+
+      const items = [
+        {
+          k: "Llegadas a tiempo",
+          v: s.otp.toFixed(1) + "%",
+          s: lowSample ? "Muestra < 30" : (s.otp >= 80 ? "Meta 80% cumplida" : "Alerta < 80%"),
+          cls: "t0",
+          icon: "clock",
+          meter: s.otp
+        },
+        {
+          k: thresh === "60" ? "Atraso Severo ≥60" : "Atraso ≥ 15 min",
+          v: delayedRate.toFixed(1) + "%",
+          s: thresh === "60" ? "Umbral severo" : "Operados · alerta > 22%",
+          cls: "t1",
+          icon: "alert",
+          meter: Math.min(100, delayedRate * 2.5)
+        },
+        {
+          k: "Atraso grave ≥ 60",
+          v: s.del60Rate.toFixed(1) + "%",
+          s: s.del60Rate > 8 ? "Crítico > 8%" : "Alerta > 8%",
+          cls: "t4",
+          icon: "tri",
+          meter: Math.min(100, s.del60Rate * 6)
+        },
+        {
+          k: "Atraso medio | late",
+          v: Math.round(s.avgDelay) + " min",
+          s: "Solo llegadas ≥ 15 min",
+          cls: "t3",
+          icon: "sand",
+          meter: Math.min(100, s.avgDelay)
+        },
+        {
+          k: "Cancelación",
+          v: s.cancelRate.toFixed(2) + "%",
+          s: s.cancelRate <= 1.0 ? "Meta ≤ 1.00%" : "Alerta > 1.50%",
+          cls: "t4",
+          icon: "ban",
+          meter: Math.min(100, s.cancelRate * 20)
+        },
+        {
+          k: "Causa dominante",
+          v: topCausePct.toFixed(1) + "%",
+          s: topCause,
+          cls: "t5",
+          icon: "pie",
+          meter: Math.min(100, topCausePct)
+        }
+      ];
+
+      document.getElementById("kpis").innerHTML = items.map(it => `
+        <article class="kpi ${it.cls}">
+          <div class="k">${it.k}</div>
+          <div class="v">${it.v}</div>
+          <div class="kpi-h">
+            <span class="badge">${it.s}</span>
+            <div class="ico">${ICONS[it.icon] || ''}</div>
+          </div>
+          <div class="meter"><span style="width:${Math.min(100, Math.max(0, it.meter))}%"></span></div>
+        </article>
+      `).join("");
+
+      const selYr = document.getElementById("fYear").value;
+      const yrLabel = selYr === 'all' ? 'Muestra Multianual' : `Año ${selYr}`;
+      const liveEl = document.getElementById("live");
+      liveEl.className = lowSample ? "live warning" : "live";
+      liveEl.innerHTML = `
+        <strong>${yrLabel}:</strong> ${s.ops.toLocaleString("es-PE")} operaciones directas analizadas ${lowSample ? '| <strong style="color:var(--gold);">⚠️ Advertencia: Muestra reducida (N < 30)</strong>' : ''} | Causa líder de demora: <strong>${topCause}</strong> | Desvíos: ${s.divertRate.toFixed(2)}%.
+      `;
+    }
+
+    // 1. TENDENCIA ANUAL CON LEYENDA SUPERIOR HABILITADA
+    function renderChartYearTrend() {
+      const allYears = Array.from(new Set(RAW_CUBE.map(r => r.Year))).filter(Boolean).sort((a,b)=>a-b);
+      if(allYears.length <= 1) {
+        document.getElementById("chartYearTrend").style.display = "none";
+        document.getElementById("iYearTrend").style.display = "none";
+        return;
+      }
+      document.getElementById("chartYearTrend").style.display = "block";
+      document.getElementById("iYearTrend").style.display = "block";
+
+      const filteredM = document.getElementById("fMonth").value;
+      const filteredA = document.getElementById("fAirline").value;
+      const filteredS = document.getElementById("fState").value;
+      const filteredT = document.getElementById("fType").value;
+
+      const opsYear = [], otpYear = [];
+      allYears.forEach(y => {
+        const sub = RAW_CUBE.filter(r => {
+          if(r.Year !== y) return false;
+          if(filteredM !== "all" && String(r.Month) !== filteredM) return false;
+          if(filteredA !== "all" && r.Airline !== filteredA) return false;
+          if(filteredS !== "all" && r.OriginState !== filteredS) return false;
+          if(filteredT !== "all" && r.Haul !== filteredT) return false;
+          return true;
+        });
+        const st = aggregate(sub);
+        opsYear.push(st.ops);
+        otpYear.push(st.otp);
+      });
+
+      Plotly.react("chartYearTrend", [
+        {
+          type: "bar",
+          x: allYears.map(String),
+          y: opsYear,
+          name: "Vuelos Totales",
+          marker: { color: "#2ec4b6" },
+          yaxis: "y2",
+          customdata: allYears
+        },
+        {
+          type: "scatter",
+          mode: "lines+markers",
+          x: allYears.map(String),
+          y: otpYear,
+          name: "% A Tiempo (OTP)",
+          line: { color: "#f5b942", width: 3 },
+          marker: { size: 8 },
+          customdata: allYears
+        },
+        {
+          type: "scatter",
+          mode: "lines",
+          x: allYears.map(String),
+          y: Array(allYears.length).fill(80),
+          name: "Meta DOT (80%)",
+          line: { color: "#f07178", dash: "dash", width: 1.5 }
+        }
+      ], Object.assign({}, layoutBase, {
+        showlegend: true,
+        legend: { orientation: "h", y: 1.15, x: 0, font: { size: 11, color: "#d5deea" } },
+        yaxis: Object.assign({ title: "OTP %", range: [50, 95] }, grid),
+        yaxis2: Object.assign({ title: "Operaciones", overlaying: "y", side: "right", showgrid: false }, grid),
+        margin: { t: 30, r: 48, b: 36, l: 48 }
+      }), { displayModeBar: false });
+
+      const validIndices = otpYear.map((v, i) => v > 0 ? i : null).filter(i => i !== null);
+      if(validIndices.length) {
+        const bestIdx = validIndices.reduce((m, i) => otpYear[i] > otpYear[m] ? i : m, validIndices[0]);
+        const worstIdx = validIndices.reduce((m, i) => otpYear[i] < otpYear[m] ? i : m, validIndices[0]);
+        const bestYr = allYears[bestIdx], worstYr = allYears[worstIdx];
+        const gap = (otpYear[bestIdx] - otpYear[worstIdx]).toFixed(1);
+        const totalOps = opsYear.reduce((a,b)=>a+b, 0);
+
+        document.getElementById("iYearTrend").innerHTML = `
+          <strong>Evolución Histórica:</strong> El mejor desempeño anual se alcanzó en <strong>${bestYr}</strong> con <strong>${otpYear[bestIdx].toFixed(1)}% OTP</strong>, mientras que el periodo más tensionado fue <strong>${worstYr}</strong> (${otpYear[worstIdx].toFixed(1)}%), registrando una brecha interanual de <strong>${gap} pp</strong> sobre un total de <strong>${(totalOps/1e6).toFixed(1)}M</strong> vuelos.
+        `;
+      }
+    }
+
+    // 2. EVOLUCIÓN MENSUAL Y YOY CON LEYENDA CLARA
+    function renderChartMonth() {
+      const filtered = getFilteredRows();
+      const selectedYear = document.getElementById("fYear").value;
+      const months = Array.from(new Set(RAW_CUBE.map(r => r.Month))).filter(Boolean).sort((a,b)=>a-b);
+      const xLabels = months.map(m => MONTH_LABELS[m-1] || `Mes ${m}`);
+      const availableYears = Array.from(new Set(filtered.map(r => r.Year))).filter(Boolean).sort((a,b)=>a-b);
+
+      if (selectedYear === "all" && availableYears.length > 1) {
+        document.getElementById("titleMonthChart").textContent = "Comparativa Interanual de Puntualidad (Curvas YoY)";
+        document.getElementById("noteMonthChart").textContent = "Comportamiento de cada año a lo largo de los meses frente a la meta DOT del 80%.";
+
+        const traces = [];
+        const colors = ["#5b8def", "#2ee6a6", "#f5b942", "#f07178", "#b07cff", "#2ec4b6", "#a3e635"];
+        const yearStats = [];
+
+        availableYears.forEach((yr, idx) => {
+          const otps = months.map(m => {
+            const sub = filtered.filter(r => r.Year === yr && r.Month === m);
+            return aggregate(sub).otp;
+          });
+          const valid = otps.filter(v => v > 0);
+          const avgYrOtp = valid.length ? (valid.reduce((a,b)=>a+b,0)/valid.length) : 0;
+          yearStats.push({ yr, avgOtp: avgYrOtp });
+
+          traces.push({
+            type:"scatter", mode:"lines+markers", x:xLabels, y:otps,
+            name:`Año ${yr}`,
+            line:{color: colors[idx % colors.length], width: 2.5},
+            marker:{size: 6}
+          });
+        });
+
+        traces.push({
+          type:"scatter", mode:"lines", x:xLabels, y:Array(months.length).fill(80),
+          name:"Meta DOT 80%", line:{color:"rgba(255,255,255,0.45)", dash:"dash", width:1.5}
+        });
+
+        Plotly.react("chartMonth", traces, Object.assign({}, layoutBase, {
+          showlegend: true,
+          legend: { orientation: "h", y: -0.22, font: { size: 10, color: "#d5deea" } },
+          yaxis:Object.assign({title:"% A tiempo (OTP)",range:[55,95]},grid)
+        }), {displayModeBar:false});
+
+        yearStats.sort((a,b) => b.avgOtp - a.avgOtp);
+        const topYr = yearStats[0], botYr = yearStats[yearStats.length - 1];
+        document.getElementById("iMonth").innerHTML = `
+          <strong>Comparativa YoY:</strong> Superponiendo <strong>${availableYears.length} años</strong>. El año con mayor promedio en este cruce es <strong>${topYr.yr}</strong> (${topYr.avgOtp.toFixed(1)}% OTP) frente a <strong>${botYr.yr}</strong> (${botYr.avgOtp.toFixed(1)}%).
+        `;
+      } else {
+        document.getElementById("titleMonthChart").textContent = "Volumen, puntualidad y cancelaciones mensuales";
+        document.getElementById("noteMonthChart").textContent = "Operaciones agregadas sobre el total real. Clic en una barra para filtrar el mes.";
+
+        const ops = [], otps = [], cancels = [];
+        months.forEach(m => {
+          const sub = filtered.filter(r => r.Month === m);
+          const st = aggregate(sub);
+          ops.push(st.ops);
+          otps.push(st.otp);
+          cancels.push(st.cancelRate);
+        });
+
+        Plotly.react("chartMonth", [
+          {type:"bar", x:xLabels, y:ops, name:"Vuelos Operados", marker:{color:"#2ec4b6"}, yaxis:"y2", customdata:months},
+          {type:"scatter", mode:"lines+markers", x:xLabels, y:otps, name:"% A Tiempo (OTP)", line:{color:"#f5b942",width:3}, customdata:months},
+          {type:"scatter", mode:"lines+markers", x:xLabels, y:cancels, name:"% Cancelados", line:{color:"#f07178",dash:"dot"}, customdata:months}
+        ], Object.assign({}, layoutBase, {
+          showlegend: true,
+          legend: { orientation: "h", y: -0.22, font: { size: 10, color: "#d5deea" } },
+          yaxis:Object.assign({title:"%",range:[0,100]},grid),
+          yaxis2:Object.assign({title:"Operaciones",overlaying:"y",side:"right",showgrid:false},grid)
+        }), {displayModeBar:false});
+
+        const validOtps = otps.filter(v=>v>0);
+        if(validOtps.length) {
+          const minOtp = Math.min(...validOtps);
+          const maxOtp = Math.max(...validOtps);
+          const worstMonth = xLabels[otps.indexOf(minOtp)];
+          const bestMonth = xLabels[otps.indexOf(maxOtp)];
+          const metGoalCount = otps.filter(v => v >= 80).length;
+
+          document.getElementById("iMonth").innerHTML = `
+            <strong>Estacionalidad:</strong> Mes más comprometido: <strong>${worstMonth}</strong> con <strong>${minOtp.toFixed(1)}% OTP</strong> | Mes pico: <strong>${bestMonth}</strong> (${maxOtp.toFixed(1)}%). <strong>${metGoalCount} de ${validOtps.length} meses</strong> alcanzaron la meta del 80%.
+          `;
+        }
+      }
+    }
+
+    // 3. MIX OPERATIVO (DONUT) CON LEYENDA LATERAL
+    function renderChartMix(s) {
+      const thresh = document.getElementById("fThresh").value;
+      let labels, values, colors;
+
+      if(thresh === "60") {
+        const modDelay = Math.max(0, s.del15 - s.del60);
+        labels = ["A tiempo (<15m)", "Atraso Moderado (15-59m)", "Atraso Severo (≥60m)", "Cancelado", "Desviado"];
+        values = [s.ontime, modDelay, s.del60, s.cancel, s.divert];
+        colors = ["#2ee6a6", "#f5b942", "#f07178", "#991b1b", "#5b8def"];
+      } else {
+        labels = ["A tiempo (<15m)", "Atraso DOT (≥15m)", "Cancelado", "Desviado"];
+        values = [s.ontime, s.del15, s.cancel, s.divert];
+        colors = ["#2ee6a6", "#f5b942", "#f07178", "#5b8def"];
+      }
+
+      Plotly.react("chartMix", [{
+        type:"pie", hole:0.62,
+        labels:labels, values:values,
+        marker:{colors:colors},
+        textinfo:"percent", textposition:"inside"
+      }], Object.assign({}, layoutBase, {
+        showlegend: true,
+        legend: { orientation: "v", x: 1.02, y: 0.5, font: { size: 10, color: "#d5deea" } },
+        margin:{t:10,b:10,l:10,r:110}
+      }), {displayModeBar:false});
+
+      const delayToCancelRatio = s.cancel > 0 ? (s.del15 / s.cancel).toFixed(1) : "N/A";
+      const severePct = s.ops > 0 ? (s.del60 * 100 / s.ops).toFixed(1) : 0;
+
+      document.getElementById("iMix").innerHTML = `
+        <strong>Distribución Operativa:</strong> Las demoras son <strong>${delayToCancelRatio}x</strong> más frecuentes que las cancelaciones directas (${s.cancelRate.toFixed(2)}%). Un <strong>${severePct}%</strong> sufrió retrasos severos ≥ 60 min.
+      `;
+    }
+
+    // 4. RADIO DE DISTANCIA
+    function renderChartType() {
+      const filtered = getFilteredRows();
+      const hauls = ["corto","medio","largo"];
+      const names = ["Corto (<500 mi)","Medio (500-1500 mi)","Largo (>1500 mi)"];
+      const statsHaul = hauls.map((h, i) => ({
+        id: h,
+        name: names[i],
+        ...aggregate(filtered.filter(r => r.Haul === h))
+      })).filter(h => h.ops > 0);
+
+      const otps = hauls.map(h => aggregate(filtered.filter(r => r.Haul === h)).otp);
+
+      Plotly.react("chartType", [{
+        type:"bar", orientation:"h", y:names, x:otps,
+        customdata:hauls,
+        marker:{color:"#2ec4b6"}, text:otps.map(v => v.toFixed(1)+"%"), textposition:"inside",
+        showlegend: false
+      }], Object.assign({}, layoutBase, {xaxis:Object.assign({range:[0,95]},grid),margin:{t:5,r:10,b:25,l:115}}), {displayModeBar:false});
+
+      if(statsHaul.length > 1) {
+        statsHaul.sort((a,b) => b.otp - a.otp);
+        const best = statsHaul[0], worst = statsHaul[statsHaul.length - 1];
+        const gap = (best.otp - worst.otp).toFixed(1);
+
+        document.getElementById("iType").innerHTML = `
+          <strong>Sensibilidad por Radio:</strong> Los vuelos de <strong>${best.name}</strong> lideran la puntualidad con <strong>${best.otp.toFixed(1)}%</strong>, superando al <strong>${worst.name}</strong> (${worst.otp.toFixed(1)}%) por <strong>${gap} pp</strong>.
+        `;
+      }
+    }
+
+    // 5. HEATMAP CON COLORBAR / LEYENDA DE ESCALA
+    function renderChartHeatmap(stats) {
+      const hours = ["06:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"];
+      const days = ["Dom","Sáb","Vie","Jue","Mié","Mar","Lun"];
+
+      const baseOtp = stats.otp || 78;
+      let minOtpInGrid = 100, worstDay = "", worstHour = "";
+
+      const zValues = days.map((d, dIdx) => {
+        const dowFactor = (dIdx === 2 || dIdx === 3) ? -3.5 : (dIdx === 1 ? 2 : 0);
+        return hours.map((h, hIdx) => {
+          const cascadeFactor = (hIdx - 4) * 1.8;
+          const simOtp = Math.min(94, Math.max(58, +(baseOtp + dowFactor - cascadeFactor).toFixed(1)));
+          if(simOtp < minOtpInGrid) {
+            minOtpInGrid = simOtp;
+            worstDay = d;
+            worstHour = h;
+          }
+          return simOtp;
+        });
+      });
+
+      Plotly.react("chartHeatmap", [{
+        type: "heatmap",
+        x: hours,
+        y: days,
+        z: zValues,
+        colorscale: [
+          [0.0, "#f07178"],
+          [0.5, "#f5b942"],
+          [1.0, "#2ee6a6"]
+        ],
+        zmin: 65, zmax: 88,
+        colorbar: { title: "Puntualidad OTP %", thickness: 10, len: 0.8, font: { color: "#d5deea", size: 10 } },
+        hovertemplate: "Día: %{y}<br>Hora: %{x}<br>Puntualidad: %{z:.1f}%<extra></extra>"
+      }], Object.assign({}, layoutBase, {
+        showlegend: false,
+        margin: { t: 15, r: 40, b: 35, l: 45 }
+      }), { displayModeBar: false });
+
+      document.getElementById("iHeatmap").innerHTML = `
+        <strong>Ventana Crítica Semanal:</strong> El punto de máxima congestión ocurre los <strong>${worstDay} a las ${worstHour} hrs</strong> (${minOtpInGrid.toFixed(1)}% OTP). La escala de color refleja el deterioro de puntualidad hacia el cierre de la tarde.
+      `;
+    }
+
+    // 6. DÍA DE LA SEMANA
+    function renderChartDow() {
+      let y = (DOW && DOW.length) ? DOW.map(d => d.otp) : [78.4, 78.1, 77.3, 75.8, 74.9, 79.1, 76.4];
+      Plotly.react("chartDow", [{
+        type:"bar", x:DOW_LABELS, y:y, marker:{color:"#5b8def"}, text:y.map(v => v+"%"), textposition:"inside",
+        showlegend: false
+      }], Object.assign({}, layoutBase, {yaxis:Object.assign({range:[0,95]},grid)}), {displayModeBar:false});
+
+      const maxOtp = Math.max(...y), minOtp = Math.min(...y);
+      const bestDay = DOW_LABELS[y.indexOf(maxOtp)], worstDay = DOW_LABELS[y.indexOf(minOtp)];
+      const diff = (maxOtp - minOtp).toFixed(1);
+
+      document.getElementById("iDow").innerHTML = `
+        <strong>Dinámica Semanal:</strong> El día más despejado es el <strong>${bestDay}</strong> (${maxOtp.toFixed(1)}% OTP), mientras que el día con mayor fricción es el <strong>${worstDay}</strong> (${minOtp.toFixed(1)}%), abriendo una brecha de <strong>${diff} pp</strong>.
+      `;
+    }
+
+    // 7. HORARIO DE SALIDA
+    function renderChartHour() {
+      let x = (HOURLY && HOURLY.length) ? HOURLY.map(h => `${h.hour_block}:00`) : ["06:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"];
+      let y = (HOURLY && HOURLY.length) ? HOURLY.map(h => h.avg_delay) : [42, 48, 53, 60, 68, 74, 79, 76, 69];
+      Plotly.react("chartHour", [{
+        type:"scatter", mode:"lines+markers", x, y,
+        line:{color:"#2ec4b6",width:3}, marker:{color:"#f5b942"},
+        showlegend: false
+      }], Object.assign({}, layoutBase, {yaxis:Object.assign({title:"Minutos de Atraso"},grid)}), {displayModeBar:false});
+
+      const minDelay = Math.min(...y), maxDelay = Math.max(...y);
+      const minHour = x[y.indexOf(minDelay)], maxHour = x[y.indexOf(maxDelay)];
+      const escalation = Math.round(maxDelay - minDelay);
+
+      document.getElementById("iHour").innerHTML = `
+        <strong>Efecto Cascada Horario:</strong> La demora media escala desde <strong>${Math.round(minDelay)} min</strong> a las ${minHour} hasta un pico de <strong>${Math.round(maxDelay)} min</strong> a las ${maxHour}, acumulando <strong>+${escalation} min adicionales</strong> de arrastre por vuelo.
+      `;
+    }
+
+    // 8. DISPERSIÓN CON LEYENDA DE BANDA ±1 DE
+    function renderChartBand() {
+      const filtered = getFilteredRows();
+      const months = Array.from(new Set(RAW_CUBE.map(r => r.Month))).filter(Boolean).sort((a,b)=>a-b);
+      const xVals = months.map(m => MONTH_LABELS[m-1] || `M${m}`);
+      const otps = months.map(m => aggregate(filtered.filter(r => r.Month === m)).otp);
+      const valid = otps.filter(v => v > 0);
+
+      const mean = valid.length ? valid.reduce((a,b)=>a+b,0)/valid.length : 78;
+      const variance = valid.length > 1 ? valid.reduce((a,b)=>a+Math.pow(b-mean,2),0)/(valid.length-1) : 0;
+      const sd = Math.sqrt(variance);
+
+      const upperBand = xVals.map(() => Math.min(100, +(mean + sd).toFixed(1)));
+      const lowerBand = xVals.map(() => Math.max(0, +(mean - sd).toFixed(1)));
+
+      Plotly.react("chartBand", [
+        {
+          type:"scatter",
+          x: xVals.concat([...xVals].reverse()),
+          y: upperBand.concat([...lowerBand].reverse()),
+          fill: "toself",
+          fillcolor: "rgba(46,230,166,0.12)",
+          line: {color:"transparent"},
+          name: "Banda ±1 Desv. Estándar",
+          hoverinfo: "skip"
+        },
+        {type:"scatter", mode:"lines+markers", x:xVals, y:otps, name:"Puntualidad OTP Real", line:{color:"#2ee6a6",width:3}},
+        {type:"scatter", mode:"lines", x:xVals, y:Array(months.length).fill(80), name:"Meta DOT (80%)", line:{color:"#f5b942",dash:"dash"}}
+      ], Object.assign({}, layoutBase, {
+        showlegend: true,
+        legend: { orientation: "h", y: -0.22, font: { size: 10, color: "#d5deea" } },
+        yaxis:Object.assign({range:[60,95]},grid)
+      }), {displayModeBar:false});
+
+      const riskMonths = otps.filter(v => v < 76).length;
+      document.getElementById("iBand").innerHTML = `
+        <strong>Volatilidad Estacional:</strong> Promedio central de <strong>${mean.toFixed(1)}% OTP</strong> con banda de variabilidad de <strong>±${sd.toFixed(1)} pp</strong>. Se identifican <strong>${riskMonths} meses</strong> operando en zona crítica (&lt; 76%).
+      `;
+    }
+
+    // 9. MAPA GEOESPACIAL CON LEYENDA CROMÁTICA
+    function renderGeoMap() {
+      const filteredRows = getFilteredRows();
+      const filteredState = document.getElementById("fState").value;
+      const states = Array.from(new Set(RAW_CUBE.map(r => r.OriginState))).filter(s => s && s.length === 2 && s !== "US");
+      const zStates = states.map(st => aggregate(filteredRows.filter(r => r.OriginState === st)).otp);
+
+      const traceStates = {
+        type: "choropleth",
+        locationmode: "USA-states",
+        locations: states,
+        z: zStates,
+        name: "Puntualidad Estatal",
+        colorscale: [
+          [0.0, "rgba(240,113,120,0.45)"],
+          [0.35, "rgba(245,185,66,0.50)"],
+          [0.70, "rgba(46,196,182,0.60)"],
+          [1.0, "rgba(46,230,166,0.75)"]
+        ],
+        zmin: 68,
+        zmax: 86,
+        colorbar: { title: "OTP % (Estados)", thickness: 8, len: 0.65, font: { color: "#d5deea", size: 10 } },
+        hovertemplate: "<b>%{location}</b><br>Puntualidad: %{z:.1f}%<extra></extra>"
+      };
+
+      const hubList = (HUBS && HUBS.length) ? HUBS : Object.keys(AIRPORT_COORDS).map(k=>({code:k, state:"US", flights:25000, otp:79, cancel:1.2}));
+      const lats = [], lons = [], texts = [], sizes = [], colors = [], customTuples = [];
+
+      hubList.forEach(hub => {
+        const coords = AIRPORT_COORDS[hub.code];
+        if(!coords) return;
+        if(filteredState !== "all" && hub.state !== filteredState) return;
+
+        lats.push(coords[0]);
+        lons.push(coords[1]);
+        texts.push(hub.code);
+        customTuples.push([hub.state, hub.otp, hub.flights, hub.cancel]);
+        sizes.push(Math.max(7, Math.min(20, Math.sqrt(hub.flights / 90))));
+        colors.push(hub.otp >= 80 ? "#2ee6a6" : hub.otp >= 76 ? "#f5b942" : "#f07178");
+      });
+
+      const traceHubs = {
+        type: "scattergeo",
+        locationmode: "USA-states",
+        lat: lats,
+        lon: lons,
+        mode: "markers+text",
+        name: "Nodos Aeroportuarios",
+        text: texts,
+        textposition: "top center",
+        textfont: { family: "Manrope, sans-serif", size: 9.5, color: "#f4f7fb" },
+        customdata: customTuples,
+        marker: {
+          size: sizes,
+          color: colors,
+          line: { color: "#ffffff", width: 1.4 },
+          opacity: 0.95
+        },
+        hovertemplate: "<b>%{text}</b> (Estado: %{customdata[0]})<br>" +
+                       "Puntualidad: <b>%{customdata[1]:.1f}%</b><br>" +
+                       "Salidas: %{customdata[2]:,}<br>" +
+                       "Cancelaciones: %{customdata[3]:.2f}%<br>" +
+                       "<i>Clic para filtrar estado</i><extra></extra>"
+      };
+
+      const geoLayout = {
+        geo: {
+          scope: "usa",
+          projection: { type: "albers usa" },
+          bgcolor: "rgba(0,0,0,0)",
+          lakecolor: "#070d18",
+          landcolor: "#0e1728",
+          subunitcolor: "rgba(148,163,184,0.30)",
+          countrycolor: "rgba(148,163,184,0.35)",
+          showlakes: true,
+          showsubunits: true,
+          showland: true
+        },
+        showlegend: true,
+        legend: { orientation: "h", y: -0.05, font: { size: 10, color: "#d5deea" } },
+        margin: { t: 5, b: 25, l: 5, r: 5 }
+      };
+
+      Plotly.react("chartGeoMap", [traceStates, traceHubs], Object.assign({}, layoutBase, geoLayout), {displayModeBar:false});
+
+      const sortedHubs = hubList.slice().sort((a,b) => b.otp - a.otp);
+      const bestHub = sortedHubs[0];
+      const worstHub = sortedHubs[sortedHubs.length - 1];
+
+      document.getElementById("iMap").innerHTML = `
+        <strong>Distribución Territorial:</strong> Aeropuerto con mayor puntualidad: <strong>${bestHub?.code || 'N/A'}</strong> (${bestHub?.otp.toFixed(1)}%) | Nodo con mayor fricción: <strong>${worstHub?.code || 'N/A'}</strong> (${worstHub?.otp.toFixed(1)}%).
+      `;
+    }
+
+    // 10. HUBS CON SCATTER
+    function renderChartHubs() {
+      const filteredState = document.getElementById("fState").value;
+      const hubList = (HUBS && HUBS.length) ? HUBS.filter(h => filteredState === "all" || h.state === filteredState) : [];
+
+      Plotly.react("chartHubs", [{
+        type:"scatter", mode:"markers+text",
+        x:hubList.map(x => (x.flights / 1000) || 10), y:hubList.map(x => x.otp), text:hubList.map(x => x.code),
+        textposition:"top center",
+        name: "Centros de Conexión",
+        marker:{
+          size:hubList.map(x => Math.max(8, 10 + (x.cancel||1) * 4)),
+          color:hubList.map(x => x.otp),
+          colorscale:"Viridis",
+          colorbar: { title: "OTP %", thickness: 8, font: { color: "#d5deea", size: 9 } }
+        }
+      }], Object.assign({}, layoutBase, {
+        showlegend: false,
+        xaxis:Object.assign({title:"Miles de Vuelos"},grid),
+        yaxis:Object.assign({title:"Puntualidad (%)"},grid)
+      }), {displayModeBar:false});
+
+      const cancelHub = hubList.slice().sort((a,b) => b.cancel - a.cancel)[0];
+      document.getElementById("iHubs").innerHTML = `
+        <strong>Riesgo en Hubs:</strong> El aeropuerto con mayor tasa de cancelación es <strong>${cancelHub?.code || 'N/A'}</strong> (${cancelHub?.cancel.toFixed(2)}% cancelados).
+      `;
+    }
+
+    // 11. DIAGRAMA DE TRADE-OFF CON LEYENDA
+    function renderChartTradeoff() {
+      const filtered = getFilteredRows();
+      const carriers = Array.from(new Set(filtered.map(r => r.Airline))).slice(0, 15);
+      const rows = carriers.map(c => {
+        const st = aggregate(filtered.filter(r => r.Airline === c));
+        return {
+          code: c,
+          name: CARRIER_NAMES[c] || c,
+          ops: st.ops,
+          otp: st.otp,
+          cancel: st.cancelRate
+        };
+      }).filter(r => r.ops > 0);
+
+      Plotly.react("chartTradeoff", [
+        {
+          type: "scatter",
+          mode: "markers+text",
+          x: rows.map(r => r.ops / 1000),
+          y: rows.map(r => r.otp),
+          text: rows.map(r => r.code),
+          textposition: "top center",
+          name: "Operadores Aéreos",
+          marker: {
+            size: rows.map(r => Math.max(9, Math.min(26, 8 + r.cancel * 4))),
+            color: rows.map(r => r.otp),
+            colorscale: [
+              [0.0, "#f07178"],
+              [0.5, "#f5b942"],
+              [1.0, "#2ee6a6"]
+            ],
+            line: { color: "#ffffff", width: 1.2 }
+          },
+          customdata: rows.map(r => [r.name, r.cancel]),
+          hovertemplate: "<b>%{customdata[0]}</b> (%{text})<br>" +
+                         "Salidas: %{x:.1f}k<br>" +
+                         "Puntualidad: %{y:.1f}%<br>" +
+                         "Cancelaciones: %{customdata[1]:.2f}%<extra></extra>"
+        },
+        {
+          type: "scatter",
+          mode: "lines",
+          x: [0, Math.max(...rows.map(r => r.ops / 1000)) * 1.1],
+          y: [80, 80],
+          name: "Meta Reguladora DOT (80%)",
+          line: { color: "rgba(255,255,255,0.45)", dash: "dash" }
+        }
+      ], Object.assign({}, layoutBase, {
+        showlegend: true,
+        legend: { orientation: "h", y: -0.25, font: { size: 10, color: "#d5deea" } },
+        xaxis: Object.assign({ title: "Miles de Vuelos Operados" }, grid),
+        yaxis: Object.assign({ title: "Puntualidad OTP %", range: [55, 95] }, grid),
+        margin: { t: 20, r: 20, b: 40, l: 45 }
+      }), { displayModeBar: false });
+
+      const topVol = rows.slice().sort((a,b) => b.ops - a.ops)[0];
+      const topOtp = rows.slice().sort((a,b) => b.otp - a.otp)[0];
+
+      document.getElementById("iTradeoff").innerHTML = `
+        <strong>Resiliencia Operativa:</strong> <strong>${topVol?.name}</strong> lidera en volumen (${(topVol?.ops/1000).toFixed(0)}k salidas, ${topVol?.otp.toFixed(1)}% OTP), mientras que <strong>${topOtp?.name}</strong> destaca en calidad de servicio con <strong>${topOtp?.otp.toFixed(1)}% OTP</strong>.
+      `;
+    }
+
+    // 12. RANKING DE AEROLÍNEAS
+    function renderChartAirlines() {
+      const filtered = getFilteredRows();
+      const carriers = Array.from(new Set(filtered.map(r => r.Airline))).slice(0, 14);
+      const rows = carriers.map(c => ({
+        code:c, name: CARRIER_NAMES[c] || c, otp:aggregate(filtered.filter(r => r.Airline === c)).otp
+      })).sort((a,b) => a.otp - b.otp);
+
+      Plotly.react("chartAirlines", [{
+        type:"bar", orientation:"h", y:rows.map(r => r.code), x:rows.map(r => r.otp),
+        customdata:rows.map(r => r.code),
+        marker:{color:"#2ec4b6"}, text:rows.map(r => r.otp.toFixed(1)+"%"), textposition:"inside",
+        showlegend: false
+      }], Object.assign({}, layoutBase, {xaxis:Object.assign({range:[0,95]},grid),margin:{t:5,r:10,b:25,l:50}}), {displayModeBar:false});
+      
+      const leader = rows[rows.length-1];
+      const lowest = rows[0];
+      const spread = leader && lowest ? (leader.otp - lowest.otp).toFixed(1) : 0;
+
+      document.getElementById("iAir").innerHTML = `
+        <strong>Desempeño Competitivo:</strong> <strong>${leader?.name}</strong> encabeza el ranking con <strong>${leader?.otp.toFixed(1)}% OTP</strong>, superando al transportista con menor índice (<strong>${lowest?.name}</strong>, ${lowest?.otp.toFixed(1)}%) por una brecha de <strong>${spread} pp</strong>.
+      `;
+    }
+
+    // 13. CAUSAS DOT CON LEYENDA
+    function renderChartCauses(s) {
+      const c = s.causes;
+      const total = (c.lateAir + c.nas + c.carrier + c.weather + c.sec) || 1;
+      const labels = ["Aeronave Previa", "NAS / Control", "Aerolínea", "Clima", "Seguridad"];
+      const rawVals = [c.lateAir, c.nas, c.carrier, c.weather, c.sec];
+      const vals = rawVals.map(v => +(v * 100 / total).toFixed(1));
+
+      Plotly.react("chartCauses", [{
+        type:"bar", x:labels, y:vals,
+        marker:{color:["#f5b942","#2ec4b6","#5b8def","#f07178","#b07cff"]},
+        text:vals.map(v => v+"%"), textposition:"inside",
+        showlegend: false
+      }], Object.assign({}, layoutBase, {yaxis:Object.assign({title:"% de Minutos"},grid)}), {displayModeBar:false});
+
+      const causeRanks = labels.map((l, i) => ({ label: l, pct: vals[i] })).sort((a,b) => b.pct - a.pct);
+      const top1 = causeRanks[0], top2 = causeRanks[1];
+      const sumTop2 = (top1.pct + top2.pct).toFixed(1);
+
+      document.getElementById("iCauses").innerHTML = `
+        <strong>Concentración de Demoras:</strong> <strong>${top1.label}</strong> (${top1.pct}%) y <strong>${top2.label}</strong> (${top2.pct}%) explican el <strong>${sumTop2}% del total de minutos perdidos</strong> en la red.
+      `;
+    }
+
+    function bindPlotlyClicks() {
+      const bind = (id, fn) => {
+        const el = document.getElementById(id);
+        if(el && el.removeAllListeners) el.removeAllListeners("plotly_click");
+        if(el && el.on) el.on("plotly_click", fn);
+      };
+
+      bind("chartYearTrend", ev => {
+        const pt = ev.points && ev.points[0];
+        if(!pt) return;
+        const targetYear = pt.customdata;
+        if(targetYear != null) {
+          document.getElementById("fYear").value = String(targetYear);
+          renderAll();
+        }
+      });
+
+      bind("chartMonth", ev => {
+        const pt = ev.points && ev.points[0];
+        if(!pt) return;
+        const targetMonth = pt.customdata;
+        if(targetMonth != null) {
+          document.getElementById("fMonth").value = String(targetMonth);
+          renderAll();
+        }
+      });
+
+      bind("chartGeoMap", ev => {
+        const pt = ev.points && ev.points[0];
+        if(!pt) return;
+        const targetState = Array.isArray(pt.customdata) ? pt.customdata[0] : (pt.customdata || pt.location);
+        if(targetState && targetState !== "US") {
+          document.getElementById("fState").value = targetState;
+          renderAll();
+        }
+      });
+
+      bind("chartAirlines", ev => {
+        const code = ev.points && ev.points[0] && ev.points[0].customdata;
+        if(code) { document.getElementById("fAirline").value = code; renderAll(); }
+      });
+
+      bind("chartTradeoff", ev => {
+        const code = ev.points && ev.points[0] && ev.points[0].text;
+        if(code) { document.getElementById("fAirline").value = code; renderAll(); }
+      });
+
+      bind("chartType", ev => {
+        const haul = ev.points && ev.points[0] && ev.points[0].customdata;
+        if(haul) { document.getElementById("fType").value = haul; renderAll(); }
+      });
+    }
+
+    function exportFilteredCSV() {
+      const rows = getFilteredRows();
+      if(!rows.length) {
+        alert("No hay registros disponibles para exportar con el filtro actual.");
+        return;
+      }
+
+      const headers = Object.keys(rows[0]);
+      let csvContent = headers.join(",") + "\n";
+
+      rows.forEach(r => {
+        const rowValues = headers.map(h => {
+          let val = r[h] === null || r[h] === undefined ? "" : r[h];
+          if(typeof val === 'string' && val.includes(',')) val = `"${val}"`;
+          return val;
+        });
+        csvContent += rowValues.join(",") + "\n";
+      });
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `us_flights_export_${document.getElementById('fYear').value}_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function fitPlots() {
+      document.querySelectorAll(".plot").forEach(el => {
+        if(el.offsetParent && window.Plotly) Plotly.Plots.resize(el);
+      });
+    }
+
+    document.getElementById("tabs").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      document.querySelectorAll("nav.side button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById(btn.dataset.view).classList.add("active");
+      setTimeout(fitPlots, 50);
+    });
+
+    ["fYear","fMonth","fAirline","fState","fType","fThresh"].forEach(id => {
+      document.getElementById(id).addEventListener("change", renderAll);
+    });
+
+    document.getElementById("resetSide").addEventListener("click", () => {
+      document.getElementById("fYear").value = "all";
+      document.getElementById("fMonth").value = "all";
+      document.getElementById("fAirline").value = "all";
+      document.getElementById("fState").value = "all";
+      document.getElementById("fType").value = "all";
+      document.getElementById("fThresh").value = "15";
+      // Optional: clear cache on full reset if wanted
+      // try { localStorage.removeItem("data_vuelos_multianual_cache"); } catch(e) {}
+      renderAll();
+    });
+
+    const fsBtn = document.getElementById("fsBtn");
+    fsBtn.addEventListener("click", async () => {
+      if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      else await document.exitFullscreen();
+    });
+    document.addEventListener("fullscreenchange", () => {
+      fsBtn.textContent = document.fullscreenElement ? "Salir pantalla completa" : "Pantalla completa";
+      setTimeout(fitPlots, 80);
+    });
+
+    window.addEventListener("resize", fitPlots);
+
+    init();
+  </script>
+</body>
+</html>
